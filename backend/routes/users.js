@@ -1,5 +1,3 @@
-// backend/routes/users.js
-<<<<<<< HEAD
 console.log("LOG: users.js file loading..."); // Debug Log
 
 const router = require('express').Router();
@@ -74,10 +72,10 @@ router.put('/profile', protect, async (req, res) => {
     const originalEmail = user.email;
     user.email = req.body.email || user.email;
     if (user.email !== originalEmail) {
-       const emailExists = await User.findOne({ email: user.email });
-       if (emailExists && emailExists._id.toString() !== user._id.toString()) {
-           return res.status(400).json({ message: 'Email already in use' });
-       }
+        const emailExists = await User.findOne({ email: user.email });
+        if (emailExists && emailExists._id.toString() !== user._id.toString()) {
+            return res.status(400).json({ message: 'Email already in use' });
+        }
     }
     const updatedUser = await user.save();
     res.json({ // Send back updated info + NEW token (best practice)
@@ -138,6 +136,7 @@ router.put('/changepassword', protect, async (req, res) => {
           res.json({ message: 'Password updated successfully' });
       } else {
           console.log(`Backend: Password change failed for ${user.email} - Invalid current password`);
+          // THIS IS THE LINE I FIXED:
           res.status(401).json({ message: 'Invalid current password' });
       }
   } catch (error) {
@@ -182,89 +181,3 @@ router.post('/donatemoney', protect, async (req, res) => {
 
 module.exports = router;
 console.log("LOG: users.js finished loading."); // Debug Log
-=======
-
-const router = require('express').Router();
-const User = require('../models/user.model');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
-// --- 1. REGISTER A NEW USER ---
-// @route   POST /api/users/register
-router.post('/register', async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    // 1. Check if user already exists
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ msg: 'User already exists' });
-    }
-
-    // 2. Create new user instance
-    user = new User({
-      username,
-      email,
-      password,
-    });
-
-    // 3. Hash the password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    // 4. Save user to database
-    await user.save();
-
-    res.status(201).json({ msg: 'User registered successfully' });
-
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
-
-// --- 2. LOGIN A USER ---
-// @route   POST /api/users/login
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // 1. Check if user exists
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
-    }
-
-    // 2. Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
-    }
-
-    // 3. Create a JWT Payload (the data to store in the token)
-    const payload = {
-      user: {
-        id: user.id,
-        username: user.username
-      }
-    };
-
-    // 4. Sign the token
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET, // Your secret from .env
-      { expiresIn: '3h' }, // Token expires in 3 hours
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token }); // Send the token back to the client
-      }
-    );
-
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
-
-module.exports = router;
->>>>>>> f2cee92c094d2c6df22d0f22bc55c8592bdbe6e1

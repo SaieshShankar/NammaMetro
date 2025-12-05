@@ -1,103 +1,132 @@
 // backend/data/fareMatrix.js
 
-// IMPORTANT: These arrays MUST accurately reflect the stations currently
-// in your database AND their correct order on the line.
+// --- COMPLETE STATION LISTS ---
+// Names must EXACTLY match your database and frontend dropdown options
+
 const purpleLine = [
   "Whitefield (Kadugodi)",
   "Hopefarm Channasandra",
   "Kadugodi Tree Park",
   "Pattanduru Agrahara",
   "Sri Sathya Sai Hospital",
-  "Trinity", // Assuming Trinity is after Sathya Sai Hospital based on previous lists
-  "Majestic (Nadaprabhu Kempegowda)" // Interchange
+  "Nallurhalli",
+  "Kundalahalli",
+  "Seetharamapalya",
+  "Hoodi",
+  "Garudacharapalya",
+  "Singayyanapalya",
+  "Krishnarajapura (KR Pura)",
+  "Benniganahalli",
+  "Baiyappanahalli",
+  "Swami Vivekananda Road",
+  "Indiranagar",
+  "Halasuru", // Correct spelling
+  "Trinity",
+  "Mahatma Gandhi Road (MG Road)",
+  "Cubbon Park",
+  "Dr. B.R. Ambedkar Stn., Vidhana Soudha",
+  "Sir M. Visveswaraya Stn., Central College",
+  "Majestic (Nadaprabhu Kempegowda)", // Interchange
+  "Krantivira Sangolli Rayanna Railway Station",
+  "Magadi Road",
+  "Sri Balagangadharanatha Swamiji Stn., Hosahalli", // Check if frontend sends "Hosahalli"
+  "Vijayanagar",
+  "Attiguppe", // Correct spelling
+  "Deepanjali Nagar",
+  "Mysuru Road",
+  "Pantharapalya–Nayandahalli", // Check if frontend sends "Nayandahalli"
+  "Rajarajeshwari Nagar",
+  "Jnanabharathi",
+  "Pattanagere",
+  "Kengeri Bus Terminal",
+  "Kengeri",
+  "Challaghatta" // Correct spelling
 ];
 
 const greenLine = [
+  "Madavara (BIEC)",
+  "Chikkabidarakallu",
+  "Manjunath Nagar",
   "Nagasandra",
   "Dasarahalli",
   "Jalahalli",
   "Peenya Industry",
-  // "Peenya", // Seems Peenya was missing from your list, add if needed
+  "Peenya",
   "Goraguntepalya",
   "Yeshwanthpur",
-  "Rajajinagar", // Assuming Rajajinagar is after Yeshwanthpur based on previous lists
-  "Majestic (Nadaprabhu Kempegowda)" // Interchange
+  "Sandal Soap Factory",
+  "Mahalakshmi",
+  "Rajajinagar",
+  "Mahakavi Kuvempu Road",
+  "Srirampura",
+  "Mantri Square Sampige Road",
+  "Majestic (Nadaprabhu Kempegowda)", // Interchange
+  "Chickpet",
+  "Krishna Rajendra Market",
+  "National College",
+  "Lalbagh",
+  "South End Circle",
+  "Jayanagar",
+  "Rashtreeya Vidyalaya Road",
+  "Banashankari",
+  "Jaya Prakash Nagar",
+  "Yelachenahalli",
+  "Konanakunte Cross",
+  "Doddakallasandra",
+  "Vajarahalli",
+  "Thalaghattapura",
+  "Silk Institute"
 ];
 
 
-// --- NEW getFare function based on BMRCL Chart ---
+// --- getFare function (Updated error handling slightly) ---
 const getFare = (start, end) => {
-  // Handle entry and exit at the same station
-  if (start === end) {
-    return 10;
-  }
+  if (start === end) return 10;
 
-  // Find the lines and indices
+  const majesticStationName = "Majestic (Nadaprabhu Kempegowda)";
   let startLine = purpleLine.includes(start) ? purpleLine : greenLine;
   let endLine = purpleLine.includes(end) ? purpleLine : greenLine;
-
   let startIndex = startLine.indexOf(start);
   let endIndex = endLine.indexOf(end);
 
-  // Handle case where station isn't found in our limited lists
+  // Check if stations were found
   if (startIndex === -1 || endIndex === -1) {
-    console.error(`Error: Station not found in fare matrix. Start: ${start}, End: ${end}`);
-    return null; // Station not found in the defined arrays
+    // Log the exact names received from the frontend
+    console.error(`FARE MATRIX ERROR: Station name mismatch. Received Start: "${start}", End: "${end}". Check against arrays.`);
+    // You could add more specific checks here if needed, e.g., trim whitespace
+    return null; // Station name doesn't match arrays
   }
 
-  // Calculate distance (number of stations BETWEEN start and end)
+  // Calculate distance (stations travelled, excluding start)
   let distance = 0;
-  const majesticStationName = "Majestic (Nadaprabhu Kempegowda)";
-
   if (startLine === endLine) {
-    // Same line
     distance = Math.abs(endIndex - startIndex);
   } else {
-    // Different lines - must calculate distance via Majestic
+    // Different lines: Calculate via Majestic
     let majesticStartLineIndex = startLine.indexOf(majesticStationName);
     let majesticEndLineIndex = endLine.indexOf(majesticStationName);
-
-    // Check if Majestic exists on both lines (it should)
     if (majesticStartLineIndex === -1 || majesticEndLineIndex === -1) {
-       console.error("Error: Majestic station not found in one or both line arrays for transfer calculation.");
+       console.error("FARE MATRIX ERROR: Majestic interchange not found in line arrays.");
        return null;
     }
-
-    let distToMajestic = Math.abs(startIndex - majesticStartLineIndex);
-    let distFromMajestic = Math.abs(endIndex - majesticEndLineIndex);
-    distance = distToMajestic + distFromMajestic;
+    distance = Math.abs(startIndex - majesticStartLineIndex) + Math.abs(endIndex - majesticEndLineIndex);
   }
 
-  // Determine fare based on the BMRCL chart (distance = number of stations travelled)
-  if (distance <= 0) { // Should not happen if start != end, but safe check
-      return 10;
-  } else if (distance <= 2) { // 1-2 stations
-      return 10;
-  } else if (distance <= 4) { // 3-4 stations
-      return 20;
-  } else if (distance <= 6) { // 5-6 stations
-      return 30;
-  } else if (distance <= 8) { // 7-8 stations
-      return 40;
-  } else if (distance <= 10) { // 9-10 stations
-      return 50;
-  } else if (distance <= 15) { // 11-15 stations
-      return 60;
-  } else if (distance <= 18) { // 16-18 stations
-      return 70;
-  } else if (distance <= 22) { // 19-22 stations
-      return 70; // Note: Chart shows 70 for 19, 80 for 20-22. Assuming typo/simplification needed. Using 70 for simplicity up to 22.
-  } else if (distance <= 25) { // 23-25 stations
-      return 80;
-  } else if (distance <= 30) { // 26-30 stations
-      return 90;
-  } else { // > 30 stations
-      return 90;
-  }
+  // Determine fare based on distance (BMRCL chart)
+   if (distance <= 0) return 10;
+   else if (distance <= 2) return 10;
+   else if (distance <= 4) return 20;
+   else if (distance <= 6) return 30;
+   else if (distance <= 8) return 40;
+   else if (distance <= 10) return 50;
+   else if (distance <= 15) return 60;
+   else if (distance <= 18) return 70;
+   else if (distance <= 19) return 70; // 19 stations
+   else if (distance <= 22) return 80; // 20-22 stations
+   else if (distance <= 30) return 90; // 23-30 stations (simplified)
+   else return 90; // > 30 stations
 };
-// --- END of new getFare function ---
+// --- END of getFare function ---
 
 
-// Ensure you are using the correct export based on your project setup
-module.exports = getFare; // Use this for CommonJS (if backend/package.json doesn't have "type": "module")
-// export default getFare; // Use this for ES Modules (if backend/package.json has "type": "module")
+module.exports = getFare;

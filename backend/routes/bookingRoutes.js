@@ -1,6 +1,6 @@
 // backend/routes/bookingRoutes.js
 const router = require('express').Router();
-const Booking = require('../models/bookingModel.js');
+const Booking = require('../models/BookingModel.js');
 const User = require('../models/user.model.js'); // <-- 1. IMPORT USER MODEL
 const { protect } = require('../middleware/authMiddleware.js');
 const { v4: uuidv4 } = require('uuid');
